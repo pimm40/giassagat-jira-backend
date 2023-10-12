@@ -1,0 +1,15 @@
+{
+"ti":"COMPAZ_TRN",
+"cn":"IONWorkFlow-COMPAZ_TRN",
+"dt":"12",
+"ci":"COMPAZ_TRN~z3N_ZveQBSCnHPBSGydRHgQMFHIaRkKdnfq3aoiuMT4",
+"cs":"rSmbrD7Kx_vmxmnZ9rOlIyKLlG1YpaVopBmwwjB7HXlGc2mMVyMQV2cr5pVGq7_ttjF25725yUltQSZb6QjEgw",
+"iu":"https://mingle-ionapi.inforcloudsuite.com","pu":"https://mingle-sso.inforcloudsuite.com:443/COMPAZ_TRN/as/",
+"oa":"authorization.oauth2",
+"ot":"token.oauth2",
+"or":"revoke_token.oauth2",
+"ev":"U1478358101",
+"v":"1.0",
+"saak":"COMPAZ_TRN#tG1R6zA_InTLdhNyTSj0yOMISZ0zG-Bx28YZ7yVYZgVnBJ2fFdsLxo50ROAanyysWBiFD-o9DkyrZoKTMUR37w",
+"sask":"QRnZr0-IDUDdQoWS8pZA1RrYZFk6DDMCfXJYU_MFhQckO6-1dbYc2PSr875IH7sqK7iMfmxfnZEypUq3_LbriQ"
+}
