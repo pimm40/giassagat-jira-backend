@@ -8,7 +8,7 @@ const {
 async function indexIssueByID(req, res, next) {
     const { idIssue } = req.query
     console.log('req.query', req.query)
-    console.log('idIsssue', idIssue)
+    console.log('idIssue', idIssue)
     try {
         const result = await getIssueByIDFunc(idIssue)
         return res.json(result); // Retorna a resposta bem-sucedida
