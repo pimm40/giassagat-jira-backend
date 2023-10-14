@@ -42,40 +42,85 @@ async function getProjects () {
 async function getIssueByID(issueKey) {
   try {
     const baseUrl = 'https://' + domain + '.atlassian.net';
-
+    console.log('issueKey')
     const config = {
       method: 'get',
       url: baseUrl + '/rest/api/3/issue/' + issueKey,
       headers: { 'Content-Type': 'application/json' },
       auth: auth,
     };
-
+    console.log('config', config);
     const response = await axios.request(config);
+    let filteredData = {}; // Inicialize filteredData como um objeto vazio
+    try {
+      if (response.data) {
+        const data = response.data;
+        const modifiedData = {
+          id: data.id ?? '',
+          key: data.key ?? '',
+          fields: {
+            assignee: {
+              accountId: data.fields.assignee?.accountId ?? '',
+              displayName: data.fields.assignee?.displayName ?? ''
+            },
+            reporter: {
+              accountId: data.fields.reporter?.accountId ?? '',
+              displayName: data.fields.reporter?.displayName ?? ''
+            },
+            issuetype: {
+              id: data.fields.issuetype?.id ?? '',
+              description: data.fields.issuetype?.description ?? '',
+              name: data.fields.issuetype?.name ?? ''
+            },
+            project: {
+              id: data.fields.project?.id ?? '',
+              key: data.fields.project?.key ?? '',
+              name: data.fields.project?.name ?? '',
+              projectTypeKey: data.fields.project?.projectTypeKey ?? '',
+              projectCategory: {
+                id: data.fields.project?.projectCategory?.id ?? '',
+                description: data.fields.project?.projectCategory?.description ?? '',
+                name: data.fields.project?.projectCategory?.name ?? ''
+              }
+            },
+            summary: data.fields.summary ?? '',
+            priority: {
+              id: data.fields.priority?.id ?? '',
+              name: data.fields.priority?.name ?? ''
+            },
+            status: {
+              id: data.fields.status?.id ?? '',
+              description: data.fields.status?.description ?? '',
+              statusCategory: {
+                id: data.fields.status?.statusCategory?.id ?? '',
+                key: data.fields.status?.statusCategory?.key ?? '',
+                colorName: data.fields.status?.statusCategory?.colorName ?? '',
+                name: data.fields.status?.statusCategory?.name ?? ''
+              }
+            },
+            creator: {
+              accountId: data.fields.creator?.accountId ?? '',
+              displayName: data.fields.creator?.displayName ?? ''
+            },
+            timetracking: {
+              remainingEstimate: data.fields.timetracking?.remainingEstimate ?? '',
+              timeSpent: data.fields.timetracking?.timeSpent ?? '',
+              remainingEstimateSeconds: data.fields.timetracking?.remainingEstimateSeconds ?? '',
+              timeSpentSeconds: data.fields.timetracking?.timeSpentSeconds ?? ''
+            }
+          }
+        };
 
-    // Filtrar os campos desejados da resposta da API
-    const filteredData = {
-      id: response.data.id,
-      key: response.data.key,
-      fieldField_id: response.data.fields.customfield_10500.id,
-      fieldField_name: response.data.fields.customfield_10500.name,
-      assigneeAccountId: response.data.fields.assignee.accountId,
-      assigneeDisplayName: response.data.fields.assignee.displayName,
-      project_id: response.data.fields.project.id,
-      project_key: response.data.fields.project.key,
-      project_name: response.data.fields.project.name,
-      projectCategory_id: response.data.fields.project.projectCategory.id,
-      projectCategory_name: response.data.fields.project.projectCategory.name,
-      timetrackingTimeSpent: response.data.fields.timetracking.timeSpent,
-      timetrackingStatus_id: response.data.fields.status.id,
-      timetrackingStatus_name: response.data.fields.status.name,
-      statusCategory_id: response.data.fields.status.statusCategory.id,
-      statusCategory_key: response.data.fields.status.statusCategory.key,
-      statusCategory_colorName: response.data.fields.status.statusCategory.colorName,
-      statusCategory_name: response.data.fields.status.statusCategory.name
-    };
+        console.log('modifiedData ok');
+        filteredData = modifiedData; // Atribua modifiedData a filteredData
+        };
+    } catch (error) {
+      console.error("Erro ao filtrar dados da resposta da API:", error);
+    }
 
-    console.log(filteredData);
+    console.log('filteredData', filteredData);
     return filteredData;
+
   } catch (error) {
     console.log('error: ');
     console.log(error.response.data.errors);
