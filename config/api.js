@@ -10,33 +10,98 @@ const auth = {
   password: password
 }
 
-async function getProjects () {
+async function getProjects(projectKey) {
   try {
-    const baseUrl = 'https://' + domain + '.atlassian.net'
+    const baseUrl = 'https://' + domain + '.atlassian.net';
+    let jql = 'project is not EMPTY';
+
+    if (projectKey) {
+      jql = 'project=' + projectKey;
+    }
 
     const config = {
       method: 'get',
-      url: baseUrl + '/rest/api/3/project/recent',
+      url: baseUrl + '/rest/api/3/search?jql=' + jql,
       headers: { 'Content-Type': 'application/json' },
       auth: auth
     }
-    const response = await axios.request(config)
-    // Mapear os dados para retornar apenas as propriedades desejadas
-    const mappedData = response.data.map(project => ({
-      name: project.name,
-      key: project.key,
-      projectCategory: {
-        id: project.projectCategory.id,
-        name: project.projectCategory.name
-      }
-    }));
 
-    console.log(mappedData);
-    return mappedData;
+    console.log('config', config);
+    const response = await axios.request(config);
+    let filteredData = []; // Inicialize filteredData como um array vazio para armazenar a lista de objetos
+
+    try {
+      if (response.data) {
+        const data = response.data.issues;
+        for (const issue of data) {
+          const modifiedData = {
+            id: issue.id ?? '',
+            key: issue.key ?? '',
+            fields: {
+              customfield_11282: {
+                id: issue.fields.customfield_11282?.id ?? '',
+                value: issue.fields.customfield_11282?.value ?? ''
+              },
+              customfield_11397: {
+                accountId: issue.fields.customfield_11397?.accountId ?? '',
+                displayName: issue.fields.customfield_11397?.displayName ?? ''
+              },
+              assignee: {
+                accountId: issue.fields.assignee?.accountId ?? '',
+                displayName: issue.fields.assignee?.displayName ?? ''
+              },
+              reporter: {
+                accountId: issue.fields.reporter?.accountId ?? '',
+                displayName: issue.fields.reporter?.displayName ?? ''
+              },
+              project: {
+                id: issue.fields.project?.id ?? '',
+                key: issue.fields.project?.key ?? '',
+                name: issue.fields.project?.name ?? '',
+                projectTypeKey: issue.fields.project?.projectTypeKey ?? '',
+                projectCategory: {
+                  id: issue.fields.project?.projectCategory?.id ?? '',
+                  description: issue.fields.project?.projectCategory?.description ?? '',
+                  name: issue.fields.project?.projectCategory?.name ?? ''
+                }
+              },
+              summary: issue.fields.summary ?? '',
+              priority: {
+                id: issue.fields.priority?.id ?? '',
+                name: issue.fields.priority?.name ?? ''
+              },
+              status: {
+                id: issue.fields.status?.id ?? '',
+                name: issue.fields.status?.name ?? '',
+                description: issue.fields.status?.description ?? '',
+                statusCategory: {
+                  id: issue.fields.status?.statusCategory?.id ?? '',
+                  key: issue.fields.status?.statusCategory?.key ?? '',
+                  colorName: issue.fields.status?.statusCategory?.colorName ?? '',
+                  name: issue.fields.status?.statusCategory?.name ?? ''
+                }
+              },
+              creator: {
+                accountId: issue.fields.creator?.accountId ?? '',
+                displayName: issue.fields.creator?.displayName ?? ''
+              }
+            }
+          };
+
+          filteredData.push(modifiedData); // Adicione o objeto modificado à lista
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao filtrar dados da resposta da API:", error);
+    }
+
+    console.log('filteredData', filteredData);
+    return filteredData;
   } catch (error) {
-    console.log('error: ')
-    console.log(error.response.data.errors)
+    console.log('error:');
+    console.log(error.response.data.errors);
   }
+
 }
 
 async function getIssueByID(issueKey) {

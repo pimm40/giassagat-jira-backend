@@ -18,9 +18,9 @@ const getIssueByIDFunc = async (issueKey) => {
   }
 }
 
-const getRecentProjects = async () => {
+const getProjectsFunc = async (projectKey) => {
   try {
-    const recentProjects = await getProjects();
+    const recentProjects = await getProjects(projectKey);
     return recentProjects;
   } catch (error) {
     throw error; // Lança o erro para ser tratado no controlador
@@ -38,6 +38,6 @@ const getIssuesFunc = async () => {
 module.exports = {
   getUsersFunc,
   getIssueByIDFunc,
-  getRecentProjects,
+  getProjectsFunc,
   getIssuesFunc
 };

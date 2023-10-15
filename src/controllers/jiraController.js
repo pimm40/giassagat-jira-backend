@@ -1,14 +1,13 @@
 const {
     getUsersFunc,
     getIssueByIDFunc,
-    getRecentProjects,
+    getProjectsFunc,
     getIssuesFunc
 } = require('../services/jiraService')
 
 async function indexIssueByID(req, res, next) {
     const { idIssue } = req.query
     console.log('req.query', req.query)
-    console.log('idIssue', idIssue)
     try {
         const result = await getIssueByIDFunc(idIssue)
         return res.json(result); // Retorna a resposta bem-sucedida
@@ -19,8 +18,10 @@ async function indexIssueByID(req, res, next) {
 }
 
 async function indexRecentProjects(req, res, next) {
+    const { projectKey } = req.query
+    console.log('req.query', req.query)
     try {
-        const result = await getRecentProjects()
+        const result = await getProjectsFunc(projectKey)
         return res.json(result); // Retorna a resposta bem-sucedida
     } catch (error) {
         console.error('Erro ao buscar os projetos recentes:', error);
