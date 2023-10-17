@@ -65,6 +65,7 @@ async function getProjects(projectKey) {
                   name: issue.fields.project?.projectCategory?.name ?? ''
                 }
               },
+              description: issue.fields.description?.content[0]?.content[0]?.text ?? '',
               summary: issue.fields.summary ?? '',
               priority: {
                 id: issue.fields.priority?.id ?? '',
@@ -148,6 +149,7 @@ async function getIssueByID(issueKey) {
                 name: data.fields.project?.projectCategory?.name ?? ''
               }
             },
+            description: data.fields.description?.content[0]?.content[0]?.text ?? '',
             summary: data.fields.summary ?? '',
             priority: {
               id: data.fields.priority?.id ?? '',
