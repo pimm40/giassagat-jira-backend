@@ -52,6 +52,10 @@ async function getAllProjects(projectKey, pageSize = 50, startAt = 0) {
                 accountId: issue.fields.customfield_11397?.accountId ?? '',
                 displayName: issue.fields.customfield_11397?.displayName ?? ''
               },
+              customfield_11222: {
+                id: issue.fields.customfield_11222?.id ?? '',
+                value: issue.fields.customfield_11222?.value ?? ''
+              },
               assignee: {
                 accountId: issue.fields.assignee?.accountId ?? '',
                 displayName: issue.fields.assignee?.displayName ?? ''
@@ -161,6 +165,10 @@ async function getProjects(projectKey, pageSize, pageNumber) {
           customfield_11397: {
             accountId: issue.fields.customfield_11397?.accountId || '',
             displayName: issue.fields.customfield_11397?.displayName || ''
+          },
+          customfield_11222: {
+            id: issue.fields.customfield_11222?.id ?? '',
+            value: issue.fields.customfield_11222?.value ?? ''
           },
           assignee: {
             accountId: issue.fields.assignee?.accountId || '',
