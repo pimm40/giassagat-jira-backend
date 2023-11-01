@@ -3,6 +3,7 @@ const jiraController = require('../../controllers/jiraController')
 
 routes.get('/issue', jiraController.indexIssueByID)
 routes.get('/projects', jiraController.indexRecentProjects)
+routes.get('/projects/all', jiraController.indexAllProjects)
 routes.get('/users', jiraController.indexUsersFunc)
 routes.get('/issues', jiraController.indexIssuesFunc)
 

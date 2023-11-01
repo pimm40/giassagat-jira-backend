@@ -1,4 +1,4 @@
-const { getProjects, getIssues, getIssueByID, getUsers } = require('../../config/api');
+const { getAllProjects, getProjects, getIssues, getIssueByID, getUsers } = require('../../config/api');
 
 const getUsersFunc = async () => {
   try {
@@ -17,10 +17,17 @@ const getIssueByIDFunc = async (issueKey) => {
     throw error; // Lança o erro para ser tratado no controlador
   }
 }
-
-const getProjectsFunc = async (projectKey) => {
+const getAllProjectsFunc = async (projectKey) => {
   try {
-    const recentProjects = await getProjects(projectKey);
+    const allProjects = await getAllProjects(projectKey);
+    return allProjects;
+  } catch (error) {
+    throw error; // Lança o erro para ser tratado no controlador
+  }
+}
+const getProjectsFunc = async (projectKey, pageSize, pageNumber) => {
+  try {
+    const recentProjects = await getProjects(projectKey, pageSize, pageNumber);
     return recentProjects;
   } catch (error) {
     throw error; // Lança o erro para ser tratado no controlador
@@ -38,6 +45,7 @@ const getIssuesFunc = async () => {
 module.exports = {
   getUsersFunc,
   getIssueByIDFunc,
+  getAllProjectsFunc,
   getProjectsFunc,
   getIssuesFunc
 };
