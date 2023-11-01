@@ -10,18 +10,24 @@ const auth = {
   password: password
 }
 
-async function getProjects(projectKey) {
+async function getAllProjects(projectKey, pageSize = 50, startAt = 0) {
   try {
     const baseUrl = 'https://' + domain + '.atlassian.net';
     let jql = 'project is not EMPTY';
 
     if (projectKey) {
-      jql = 'project=' + projectKey;
+      jql = `project=${projectKey}`;
     }
+
+    const apiUrl = new URL(baseUrl);
+    apiUrl.pathname = '/rest/api/3/search';
+    apiUrl.searchParams.append('jql', jql);
+    apiUrl.searchParams.append('maxResults', pageSize);
+    apiUrl.searchParams.append('startAt', startAt);
 
     const config = {
       method: 'get',
-      url: baseUrl + '/rest/api/3/search?jql=' + jql,
+      url: apiUrl.toString(),
       headers: { 'Content-Type': 'application/json' },
       auth: auth
     }
@@ -96,7 +102,16 @@ async function getProjects(projectKey) {
       console.error("Erro ao filtrar dados da resposta da API:", error);
     }
 
-    console.log('filteredData', filteredData);
+    // Verificar se há mais páginas de resultados
+    const totalResults = response.data.total;
+    const nextPageStartAt = startAt + pageSize;
+
+    if (nextPageStartAt < totalResults) {
+      // Fazer uma chamada recursiva para buscar a próxima página de resultados
+      const nextPageResults = await getProjects(projectKey, pageSize, nextPageStartAt);
+      filteredData = filteredData.concat(nextPageResults);
+    }
+
     return filteredData;
   } catch (error) {
     console.log('error:');
@@ -104,7 +119,106 @@ async function getProjects(projectKey) {
   }
 
 }
+async function getProjects(projectKey, pageSize, pageNumber) {
+  try {
+    const baseUrl = 'https://' + domain + '.atlassian.net';
+    let jql = 'project is not EMPTY';
 
+    if (projectKey) {
+      jql = `project=${projectKey}`;
+    }
+
+    const apiUrl = new URL(baseUrl);
+    apiUrl.pathname = '/rest/api/3/search';
+    apiUrl.searchParams.append('jql', jql);
+    apiUrl.searchParams.append('maxResults', pageSize);
+    apiUrl.searchParams.append('startAt', (pageNumber - 1) * pageSize);
+
+    const config = {
+      method: 'get',
+      url: apiUrl.toString(),
+      headers: { 'Content-Type': 'application/json' },
+      auth: auth
+    }
+
+    console.log('config', config);
+    const response = await axios.request(config);
+    
+    if (!response.data || !Array.isArray(response.data.issues)) {
+      throw new Error("Resposta da API não possui dados válidos.");
+    }
+
+    const data = response.data.issues;
+    const filteredData = data.map(issue => {
+      return {
+        id: issue.id || '',
+        key: issue.key || '',
+        fields: {
+          customfield_11282: {
+            id: issue.fields.customfield_11282?.id || '',
+            value: issue.fields.customfield_11282?.value || ''
+          },
+          customfield_11397: {
+            accountId: issue.fields.customfield_11397?.accountId || '',
+            displayName: issue.fields.customfield_11397?.displayName || ''
+          },
+          assignee: {
+            accountId: issue.fields.assignee?.accountId || '',
+            displayName: issue.fields.assignee?.displayName || ''
+          },
+          reporter: {
+            accountId: issue.fields.reporter?.accountId || '',
+            displayName: issue.fields.reporter?.displayName || ''
+          },
+          project: {
+            id: issue.fields.project?.id || '',
+            key: issue.fields.project?.key || '',
+            name: issue.fields.project?.name || '',
+            projectTypeKey: issue.fields.project?.projectTypeKey || '',
+            projectCategory: {
+              id: issue.fields.project?.projectCategory?.id || '',
+              description: issue.fields.project?.projectCategory?.description || '',
+              name: issue.fields.project?.projectCategory?.name || ''
+            }
+          },
+          description: issue.fields.description?.content[0]?.content[0]?.text || '',
+          summary: issue.fields.summary || '',
+          priority: {
+            id: issue.fields.priority?.id || '',
+            name: issue.fields.priority?.name || ''
+          },
+          status: {
+            id: issue.fields.status?.id || '',
+            name: issue.fields.status?.name || '',
+            description: issue.fields.status?.description || '',
+            statusCategory: {
+              id: issue.fields.status?.statusCategory?.id || '',
+              key: issue.fields.status?.statusCategory?.key || '',
+              colorName: issue.fields.status?.statusCategory?.colorName || '',
+              name: issue.fields.status?.statusCategory?.name || ''
+            }
+          },
+          creator: {
+            accountId: issue.fields.creator?.accountId || '',
+            displayName: issue.fields.creator?.displayName || ''
+          }
+        }
+      };
+    });
+
+    const totalPages = Math.ceil(response.data.total / pageSize);
+
+    if (pageNumber < totalPages) {
+      const nextPageResults = await getProjects(projectKey, pageSize, pageNumber + 1);
+      filteredData.push(...nextPageResults);
+    }
+
+    return filteredData;
+  } catch (error) {
+    console.error("Erro na chamada da API:", error);
+    throw error;
+  }
+}
 async function getIssueByID(issueKey) {
   try {
     const baseUrl = 'https://' + domain + '.atlassian.net';
@@ -193,8 +307,6 @@ async function getIssueByID(issueKey) {
     console.log(error.response.data.errors);
   }
 }
-
-
 async function getUsers () {
   try {
     const baseUrl = 'https://' + domain + '.atlassian.net'
@@ -213,7 +325,6 @@ async function getUsers () {
     console.log(error.response.data.errors)
   }
 }
-
 async function getIssues() {
   try {
     const baseUrl = 'https://' + domain + '.atlassian.net';
@@ -251,6 +362,7 @@ async function getIssues() {
 }
 
 module.exports = {
+  getAllProjects,
   getProjects,
   getIssues,
   getIssueByID,
