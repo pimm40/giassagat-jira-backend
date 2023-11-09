@@ -255,9 +255,20 @@ async function getIssueByID(issueKey) {
           id: data.id ?? '',
           key: data.key ?? '',
           fields: {
-            assignee: {
+            dateStarted: data.fields.customfield_10971 ?? '', // Data de Início
+            assignee: { // Responsável
               accountId: data.fields.assignee?.accountId ?? '',
               displayName: data.fields.assignee?.displayName ?? ''
+            },
+            qaAnalyst:{ // QA Analyst
+              displayName: data.fields.worklog?.worklogs?.author?.displayName ?? '',
+              accountId: data.fields.worklog?.worklogs?.author?.accountId ?? '',
+              started: data.fields.worklog?.worklogs?.started ?? '',
+              timeSpentSeconds: data.fields.worklog?.worklogs?.timeSpentSeconds ?? ''
+            },
+            qeReviewer: { // QE Reviewer
+              displayName: data.fields.customfield_10908?.displayName ?? '',
+              accountId: data.fields.customfield_10908?.accountId ?? ''
             },
             reporter: {
               accountId: data.fields.reporter?.accountId ?? '',
@@ -295,7 +306,7 @@ async function getIssueByID(issueKey) {
                 name: data.fields.status?.statusCategory?.name ?? ''
               }
             },
-            creator: {
+            creator: { // Criador
               accountId: data.fields.creator?.accountId ?? '',
               displayName: data.fields.creator?.displayName ?? ''
             },
