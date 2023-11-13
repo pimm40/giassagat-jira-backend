@@ -127,20 +127,16 @@ async function getAllProjects(projectKey, pageSize = 50, startAt = 0) {
   }
 
 }
-async function getProjects(projectKey, pageSize, pageNumber) {
+async function getProjectKeyByPeriod(projectKey, startDate, endDate, pageSize, pageNumber) {
   try {
     const baseUrl = 'https://' + domain + '.atlassian.net';
-    let jql = 'project is not EMPTY';
-
-    if (projectKey) {
-      jql = `project=${projectKey}`;
-    }
+    const jql = `project=${projectKey} AND created >= '${startDate}' AND created <= '${endDate}'`;
 
     const apiUrl = new URL(baseUrl);
     apiUrl.pathname = '/rest/api/3/search';
     apiUrl.searchParams.append('jql', jql);
     apiUrl.searchParams.append('maxResults', pageSize);
-    apiUrl.searchParams.append('startAt', (pageNumber - 1) * pageSize);
+    apiUrl.searchParams.append('startAt', (parseInt(pageNumber, 10) - 1) * parseInt(pageSize, 10));
 
     const config = {
       method: 'get',
@@ -151,7 +147,7 @@ async function getProjects(projectKey, pageSize, pageNumber) {
 
     console.log('config', config);
     const response = await axios.request(config);
-    
+
     if (!response.data || !Array.isArray(response.data.issues)) {
       throw new Error("Resposta da API não possui dados válidos.");
     }
@@ -222,10 +218,222 @@ async function getProjects(projectKey, pageSize, pageNumber) {
       };
     });
 
-    const totalPages = Math.ceil(response.data.total / pageSize);
+    const totalPages = Math.ceil(parseInt(response.data.total, 10) / parseInt(pageSize, 10));
 
-    if (pageNumber < totalPages) {
-      const nextPageResults = await getProjects(projectKey, pageSize, pageNumber + 1);
+    if (parseInt(pageNumber, 10) < totalPages) {
+      const nextPageResults = await getProjectKeyByPeriod(projectKey, startDate, endDate, parseInt(pageSize, 10), parseInt(pageNumber, 10) + 1);
+      filteredData.push(...nextPageResults);
+    }
+
+    return filteredData;
+  } catch (error) {
+    console.error("Erro na chamada da API:", error);
+    throw error;
+  }
+}
+async function getProjects(projectKey, pageSize, pageNumber) {
+  try {
+    const baseUrl = 'https://' + domain + '.atlassian.net';
+    let jql = 'project is not EMPTY';
+
+    if (projectKey) {
+      jql = `project=${projectKey}`;
+    }
+
+    const apiUrl = new URL(baseUrl);
+    apiUrl.pathname = '/rest/api/3/search';
+    apiUrl.searchParams.append('jql', jql);
+    apiUrl.searchParams.append('maxResults', pageSize);
+    apiUrl.searchParams.append('startAt', (parseInt(pageNumber, 10) - 1) * parseInt(pageSize, 10));
+
+    const config = {
+      method: 'get',
+      url: apiUrl.toString(),
+      headers: { 'Content-Type': 'application/json' },
+      auth: auth
+    }
+
+    console.log('config', config);
+    const response = await axios.request(config);
+
+    if (!response.data || !Array.isArray(response.data.issues)) {
+      throw new Error("Resposta da API não possui dados válidos.");
+    }
+
+    const data = response.data.issues;
+    const filteredData = data.map(issue => {
+      return {
+        id: issue.id || '',
+        key: issue.key || '',
+        fields: {
+          customfield_11282: {
+            id: issue.fields.customfield_11282?.id || '',
+            value: issue.fields.customfield_11282?.value || ''
+          },
+          customfield_11397: {
+            accountId: issue.fields.customfield_11397?.accountId || '',
+            displayName: issue.fields.customfield_11397?.displayName || ''
+          },
+          customfield_10975: {
+            id: issue.fields.customfield_10975?.id ?? '',
+            value: issue.fields.customfield_10975?.value ?? ''
+          },
+          customfield_11222: {
+            id: issue.fields.customfield_11222?.id ?? '',
+            value: issue.fields.customfield_11222?.value ?? ''
+          },
+          assignee: {
+            accountId: issue.fields.assignee?.accountId || '',
+            displayName: issue.fields.assignee?.displayName || ''
+          },
+          reporter: {
+            accountId: issue.fields.reporter?.accountId || '',
+            displayName: issue.fields.reporter?.displayName || ''
+          },
+          project: {
+            id: issue.fields.project?.id || '',
+            key: issue.fields.project?.key || '',
+            name: issue.fields.project?.name || '',
+            projectTypeKey: issue.fields.project?.projectTypeKey || '',
+            projectCategory: {
+              id: issue.fields.project?.projectCategory?.id || '',
+              description: issue.fields.project?.projectCategory?.description || '',
+              name: issue.fields.project?.projectCategory?.name || ''
+            }
+          },
+          description: issue.fields.description?.content[0]?.content[0]?.text || '',
+          summary: issue.fields.summary || '',
+          priority: {
+            id: issue.fields.priority?.id || '',
+            name: issue.fields.priority?.name || ''
+          },
+          status: {
+            id: issue.fields.status?.id || '',
+            name: issue.fields.status?.name || '',
+            description: issue.fields.status?.description || '',
+            statusCategory: {
+              id: issue.fields.status?.statusCategory?.id || '',
+              key: issue.fields.status?.statusCategory?.key || '',
+              colorName: issue.fields.status?.statusCategory?.colorName || '',
+              name: issue.fields.status?.statusCategory?.name || ''
+            }
+          },
+          creator: {
+            accountId: issue.fields.creator?.accountId || '',
+            displayName: issue.fields.creator?.displayName || ''
+          }
+        }
+      };
+    });
+
+    const totalPages = Math.ceil(parseInt(response.data.total, 10) / parseInt(pageSize, 10));
+
+    if (parseInt(pageNumber, 10) < totalPages) {
+      const nextPageResults = await getProjects(projectKey, parseInt(pageSize, 10), parseInt(pageNumber, 10) + 1);
+      filteredData.push(...nextPageResults);
+    }
+
+    return filteredData;
+  } catch (error) {
+    console.error("Erro na chamada da API:", error);
+    throw error;
+  }
+}
+async function getProjectsByPeriod(startDate, endDate, pageSize, pageNumber) {
+  try {
+    const baseUrl = 'https://' + domain + '.atlassian.net';
+    const jql = `created >= '${startDate}' AND created <= '${endDate}'`;
+
+    const apiUrl = new URL(baseUrl);
+    apiUrl.pathname = '/rest/api/3/search';
+    apiUrl.searchParams.append('jql', jql);
+    apiUrl.searchParams.append('maxResults', pageSize);
+    apiUrl.searchParams.append('startAt', (parseInt(pageNumber, 10) - 1) * parseInt(pageSize, 10));
+
+    const config = {
+      method: 'get',
+      url: apiUrl.toString(),
+      headers: { 'Content-Type': 'application/json' },
+      auth: auth
+    }
+
+    console.log('config', config);
+    const response = await axios.request(config);
+
+    if (!response.data || !Array.isArray(response.data.issues)) {
+      throw new Error("Resposta da API não possui dados válidos.");
+    }
+
+    const data = response.data.issues;
+    const filteredData = data.map(issue => {
+      return {
+        id: issue.id || '',
+        key: issue.key || '',
+        fields: {
+          customfield_11282: {
+            id: issue.fields.customfield_11282?.id || '',
+            value: issue.fields.customfield_11282?.value || ''
+          },
+          customfield_11397: {
+            accountId: issue.fields.customfield_11397?.accountId || '',
+            displayName: issue.fields.customfield_11397?.displayName || ''
+          },
+          customfield_10975: {
+            id: issue.fields.customfield_10975?.id ?? '',
+            value: issue.fields.customfield_10975?.value ?? ''
+          },
+          customfield_11222: {
+            id: issue.fields.customfield_11222?.id ?? '',
+            value: issue.fields.customfield_11222?.value ?? ''
+          },
+          assignee: {
+            accountId: issue.fields.assignee?.accountId || '',
+            displayName: issue.fields.assignee?.displayName || ''
+          },
+          reporter: {
+            accountId: issue.fields.reporter?.accountId || '',
+            displayName: issue.fields.reporter?.displayName || ''
+          },
+          project: {
+            id: issue.fields.project?.id || '',
+            key: issue.fields.project?.key || '',
+            name: issue.fields.project?.name || '',
+            projectTypeKey: issue.fields.project?.projectTypeKey || '',
+            projectCategory: {
+              id: issue.fields.project?.projectCategory?.id || '',
+              description: issue.fields.project?.projectCategory?.description || '',
+              name: issue.fields.project?.projectCategory?.name || ''
+            }
+          },
+          description: issue.fields.description?.content[0]?.content[0]?.text || '',
+          summary: issue.fields.summary || '',
+          priority: {
+            id: issue.fields.priority?.id || '',
+            name: issue.fields.priority?.name || ''
+          },
+          status: {
+            id: issue.fields.status?.id || '',
+            name: issue.fields.status?.name || '',
+            description: issue.fields.status?.description || '',
+            statusCategory: {
+              id: issue.fields.status?.statusCategory?.id || '',
+              key: issue.fields.status?.statusCategory?.key || '',
+              colorName: issue.fields.status?.statusCategory?.colorName || '',
+              name: issue.fields.status?.statusCategory?.name || ''
+            }
+          },
+          creator: {
+            accountId: issue.fields.creator?.accountId || '',
+            displayName: issue.fields.creator?.displayName || ''
+          }
+        }
+      };
+    });
+
+    const totalPages = Math.ceil(parseInt(response.data.total, 10) / parseInt(pageSize, 10));
+
+    if (parseInt(pageNumber, 10) < totalPages) {
+      const nextPageResults = await getProjectsByPeriod(startDate, endDate, parseInt(pageSize, 10), parseInt(pageNumber, 10) + 1);
       filteredData.push(...nextPageResults);
     }
 
@@ -390,7 +598,9 @@ async function getIssues() {
 
 module.exports = {
   getAllProjects,
+  getProjectKeyByPeriod,
   getProjects,
+  getProjectsByPeriod,
   getIssues,
   getIssueByID,
   getUsers
