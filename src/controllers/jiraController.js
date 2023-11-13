@@ -5,6 +5,7 @@ const {
     getProjectKeyByPeriodFunc,
     getProjectsFunc,
     getProjectsByPeriodFunc,
+    getRDAByPeriodFunc,
     getIssuesFunc
 } = require('../services/jiraService')
 
@@ -63,6 +64,17 @@ async function indexProjectsByPeriod(req, res, next) {
         return res.status(500).json({ error: 'Erro ao buscar os projetos por período' }); // Retorna um status 500 com uma mensagem de erro
     }
 }
+async function indexRDAByPeriod(req, res, next) {
+    const { RDA, startDate, endDate, pageSize, pageNumber } = req.query
+    console.log('req.query', req.query)
+    try {
+        const result = await getRDAByPeriodFunc(RDA, startDate, endDate, pageSize, pageNumber)
+        return res.json(result); // Retorna a resposta bem-sucedida
+    } catch (error) {
+        console.error('Erro ao buscar os projetos de rda por período:', error);
+        return res.status(500).json({ error: 'Erro ao buscar os projetos de rda por período' }); // Retorna um status 500 com uma mensagem de erro
+    }
+}
 async function indexUsersFunc(req, res, next) {
     try {
         const result = await getUsersFunc()
@@ -88,6 +100,7 @@ module.exports = {
     indexProjectKeyByPeriod,
     indexProjects,
     indexProjectsByPeriod,
+    indexRDAByPeriod,
     indexUsersFunc,
     indexIssuesFunc
 }

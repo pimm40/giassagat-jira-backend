@@ -443,6 +443,111 @@ async function getProjectsByPeriod(startDate, endDate, pageSize, pageNumber) {
     throw error;
   }
 }
+async function getRDAByPeriod(RDA, startDate, endDate, pageSize, pageNumber) {
+  try {
+    const baseUrl = 'https://' + domain + '.atlassian.net';
+    const jql = `created >= '${startDate}' AND created <= '${endDate}' AND issuetype=Task AND cf[10975]='${RDA}'`;
+    console.log('jql', jql)
+    const apiUrl = new URL(`${baseUrl}/rest/api/3/search`);
+    apiUrl.searchParams.append('jql', jql);
+    apiUrl.searchParams.append('maxResults', pageSize);
+    apiUrl.searchParams.append('startAt', (parseInt(pageNumber, 10) - 1) * parseInt(pageSize, 10));
+
+    console.log('apiUrl', apiUrl.toString())
+    const config = {
+      method: 'get',
+      url: apiUrl.toString(),
+      headers: { 'Content-Type': 'application/json' },
+      auth: auth
+    }
+
+    console.log('config', config);
+    const response = await axios.request(config);
+    console.log('response', response)
+    if (!response.data || !Array.isArray(response.data.issues)) {
+      throw new Error("Resposta da API não possui dados válidos.");
+    }
+
+    const data = response.data.issues;
+    const filteredData = data.map(issue => {
+      console.log('issue => ', issue)
+      return {
+        id: issue.id || '',
+        key: issue.key || '',
+        fields: {
+          customfield_11282: {
+            id: issue.fields.customfield_11282?.id || '',
+            value: issue.fields.customfield_11282?.value || ''
+          },
+          customfield_11397: {
+            accountId: issue.fields.customfield_11397?.accountId || '',
+            displayName: issue.fields.customfield_11397?.displayName || ''
+          },
+          customfield_10975: {
+            id: issue.fields.customfield_10975?.id ?? '',
+            value: issue.fields.customfield_10975?.value ?? ''
+          },
+          customfield_11222: {
+            id: issue.fields.customfield_11222?.id ?? '',
+            value: issue.fields.customfield_11222?.value ?? ''
+          },
+          assignee: {
+            accountId: issue.fields.assignee?.accountId || '',
+            displayName: issue.fields.assignee?.displayName || ''
+          },
+          reporter: {
+            accountId: issue.fields.reporter?.accountId || '',
+            displayName: issue.fields.reporter?.displayName || ''
+          },
+          project: {
+            id: issue.fields.project?.id || '',
+            key: issue.fields.project?.key || '',
+            name: issue.fields.project?.name || '',
+            projectTypeKey: issue.fields.project?.projectTypeKey || '',
+            projectCategory: {
+              id: issue.fields.project?.projectCategory?.id || '',
+              description: issue.fields.project?.projectCategory?.description || '',
+              name: issue.fields.project?.projectCategory?.name || ''
+            }
+          },
+          description: issue.fields.description?.content[0]?.content[0]?.text || '',
+          summary: issue.fields.summary || '',
+          priority: {
+            id: issue.fields.priority?.id || '',
+            name: issue.fields.priority?.name || ''
+          },
+          status: {
+            id: issue.fields.status?.id || '',
+            name: issue.fields.status?.name || '',
+            description: issue.fields.status?.description || '',
+            statusCategory: {
+              id: issue.fields.status?.statusCategory?.id || '',
+              key: issue.fields.status?.statusCategory?.key || '',
+              colorName: issue.fields.status?.statusCategory?.colorName || '',
+              name: issue.fields.status?.statusCategory?.name || ''
+            }
+          },
+          creator: {
+            accountId: issue.fields.creator?.accountId || '',
+            displayName: issue.fields.creator?.displayName || ''
+          }
+        }
+      };
+    });
+
+    const totalPages = Math.ceil(parseInt(response.data.total, 10) / parseInt(pageSize, 10));
+
+    if (parseInt(pageNumber, 10) < totalPages) {
+      const nextPageResults = await getRDAByPeriod(RDA, startDate, endDate, parseInt(pageSize, 10), parseInt(pageNumber, 10) + 1);
+      filteredData.push(...nextPageResults);
+    }
+
+    return filteredData;
+  } catch (error) {
+    console.error("Erro na chamada da API:", error);
+    throw error;
+  }
+}
 async function getIssueByID(issueKey) {
   try {
     const baseUrl = 'https://' + domain + '.atlassian.net';
@@ -601,6 +706,7 @@ module.exports = {
   getProjectKeyByPeriod,
   getProjects,
   getProjectsByPeriod,
+  getRDAByPeriod,
   getIssues,
   getIssueByID,
   getUsers
