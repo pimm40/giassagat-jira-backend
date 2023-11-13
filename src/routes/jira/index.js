@@ -6,6 +6,7 @@ routes.get('/projects', jiraController.indexProjects)
 routes.get('/projects/all', jiraController.indexAllProjects)
 routes.get('/projects/period', jiraController.indexProjectsByPeriod)
 routes.get('/projects/key-period', jiraController.indexProjectKeyByPeriod)
+routes.get('/projects/rda-period', jiraController.indexRDAByPeriod)
 routes.get('/users', jiraController.indexUsersFunc)
 routes.get('/issues', jiraController.indexIssuesFunc)
 
