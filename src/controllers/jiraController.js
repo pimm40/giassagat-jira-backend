@@ -2,7 +2,9 @@ const {
     getUsersFunc,
     getIssueByIDFunc,
     getAllProjectsFunc,
+    getProjectKeyByPeriodFunc,
     getProjectsFunc,
+    getProjectsByPeriodFunc,
     getIssuesFunc
 } = require('../services/jiraService')
 
@@ -28,7 +30,7 @@ async function indexAllProjects(req, res, next) {
         return res.status(500).json({ error: 'Erro ao buscar todos os projetos' }); // Retorna um status 500 com uma mensagem de erro
     }
 }
-async function indexRecentProjects(req, res, next) {
+async function indexProjects(req, res, next) {
     const { projectKey, pageSize, pageNumber } = req.query
     console.log('req.query', req.query)
     try {
@@ -37,6 +39,28 @@ async function indexRecentProjects(req, res, next) {
     } catch (error) {
         console.error('Erro ao buscar os projetos recentes:', error);
         return res.status(500).json({ error: 'Erro ao buscar os projetos recentes' }); // Retorna um status 500 com uma mensagem de erro
+    }
+}
+async function indexProjectKeyByPeriod(req, res, next) {
+    const { projectKey, startDate, endDate, pageSize, pageNumber } = req.query
+    console.log('req.query', req.query)
+    try {
+        const result = await getProjectKeyByPeriodFunc(projectKey, startDate, endDate, pageSize, pageNumber)
+        return res.json(result); // Retorna a resposta bem-sucedida
+    } catch (error) {
+        console.error('Erro ao buscar os projetos por período:', error);
+        return res.status(500).json({ error: 'Erro ao buscar os projetos por período' }); // Retorna um status 500 com uma mensagem de erro
+    }
+}
+async function indexProjectsByPeriod(req, res, next) {
+    const { startDate, endDate, pageSize, pageNumber } = req.query
+    console.log('req.query', req.query)
+    try {
+        const result = await getProjectsByPeriodFunc(startDate, endDate, pageSize, pageNumber)
+        return res.json(result); // Retorna a resposta bem-sucedida
+    } catch (error) {
+        console.error('Erro ao buscar os projetos por período:', error);
+        return res.status(500).json({ error: 'Erro ao buscar os projetos por período' }); // Retorna um status 500 com uma mensagem de erro
     }
 }
 async function indexUsersFunc(req, res, next) {
@@ -61,7 +85,9 @@ async function indexIssuesFunc(req, res, next) {
 module.exports = {
     indexIssueByID,
     indexAllProjects,
-    indexRecentProjects,
+    indexProjectKeyByPeriod,
+    indexProjects,
+    indexProjectsByPeriod,
     indexUsersFunc,
     indexIssuesFunc
 }
