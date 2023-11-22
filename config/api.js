@@ -530,7 +530,9 @@ async function getRDAByPeriod(RDA, startDate, endDate, pageSize, pageNumber) {
           creator: {
             accountId: issue.fields.creator?.accountId || '',
             displayName: issue.fields.creator?.displayName || ''
-          }
+          },
+          created: issue.fields.created || '',
+          updated: issue.fields.updated || ''
         }
       };
     });
